@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= htmlWebpackPlugin.options.title %></title>
+  <link rel="stylesheet" href="<%= htmlWebpackPlugin.files.chunks.app.css %>">
+</head>
+<body>
+<div id="container">
+  <app></app>
+</div>
+  <script src="<%= htmlWebpackPlugin.files.chunks.vendor.entry %>"></script>
+  <script src="<%= htmlWebpackPlugin.files.chunks.app.entry %>"></script>
+</body>
+</html>
