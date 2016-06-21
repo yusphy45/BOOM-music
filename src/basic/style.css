@@ -4,10 +4,6 @@ html, body, #container {
 
 *, *:before, *:after {
   user-select: none;
-  font-family: Georgia, "Times New Roman",
-  "Microsoft YaHei", "微软雅黑",
-  STXihei, "华文细黑",
-  serif;
 }
 
 .expand-enter, .expand-leave {
@@ -16,4 +12,8 @@ html, body, #container {
 
 .scale-enter, .scale-leave {
   transform: scale(0, 0);
+}
+
+.right-enter, .right-leave {
+  transform: translate3d(100%, 0, 0);
 }

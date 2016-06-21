@@ -4,7 +4,7 @@
   "description": "just a music player",
   "main": "index.js",
   "scripts": {
-    "server": "webpack-dev-server --inline --progress --hide-modules"
+    "start": "webpack-dev-server --inline --progress --hide-modules"
   },
   "keywords": [
     "music",
@@ -36,8 +36,10 @@
     "webpack-dev-server": "^1.14.1"
   },
   "dependencies": {
+    "es6-promise": "^3.2.1",
     "normalize.css": "^4.1.1",
     "vue": "^1.0.24",
+    "vue-resource": "^0.8.0",
     "vue-router": "^0.7.13"
   }
 }

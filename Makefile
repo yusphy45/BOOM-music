@@ -3,4 +3,4 @@ copy:
 	@cp src/sw.js dist
 
 dev: copy
-	@npm run server
+	@npm run start

@@ -8,3 +8,4 @@ Vue.component('b-microphone',require('./microphone.vue'));
 Vue.component('b-sound-wave',require('./sound-wave.vue'));
 Vue.component('b-search-input',require('./search-input.vue'));
 Vue.component('b-music-menu',require('./music-menu.vue'));
+Vue.component('b-music-control',require('./music-control.vue'));

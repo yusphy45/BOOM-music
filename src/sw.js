@@ -19,7 +19,7 @@ function requestBackend(event) {  // 请求备份操作
     caches.open(CACHE_NAME).then(function (cache) { // 缓存从线上获取的资源
       //判断资源是否允许缓存
       cache.match(event.request).then(function (item) {
-        if (item || filter(event.request, /\.(ttf|woff2|woff|eot|jpe?g|png|gif|svg)\S{0,}$/)) {
+        if (item || filter(event.request, /\.(ttf|woff2|woff|eot|jpe?g|png|gif|svg|mp3)\S{0,}$/)) {
           cache.put(event.request, response);
         }
       }).catch(function (ex) {

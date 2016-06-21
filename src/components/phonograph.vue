@@ -1,14 +1,4 @@
 <style scoped>
-  @keyframes rotate {
-    0% {
-      transform: translate3d(-50%, -50%, 0) rotateZ(0deg);
-    }
-
-    100% {
-      transform: translate3d(-50%, -50%, 0) rotateZ(360deg);
-    }
-  }
-
   .wrapper {
     position: fixed;
     background-color: #fff;
@@ -26,7 +16,6 @@
   .bg {
     width: 100%;
     height: 100%;
-    background-image: url("http://p1.music.126.net/19uFBdmSXalWhG8CQcZ9Nw==/2282586139308128.jpg");
     background-position: 50% 50%;
     background-repeat: no-repeat;
     background-size: auto 400%;
@@ -47,18 +36,13 @@
     height: 660px;
   }
 
-  .img {
+  canvas {
     width: 600px;
     height: 600px;
     border-radius: 50%;
-    animation: rotate 30s infinite linear .3s;
   }
 
-  .paused-rotate {
-    animation: rotate 30s infinite linear .3s paused;
-  }
-
-  .player-bg, .player, .img {
+  .player-bg, .player, canvas {
     position: absolute;
     left: 50%;
     top: 50%;
@@ -71,15 +55,41 @@
   }
 
   header {
+    display: flex;
     left: 0;
     top: 0;
     height: 100px;
+    border-bottom: 2px solid #eee;
+    align-items: center;
+    justify-content: space-between;
+    color: rgba(180, 180, 180, 1);
+  }
+
+  header span {
+    flex: 1 1 130px;
+    text-align: center;
+  }
+
+  header .icon {
+    width: 50px;
+    height: 50px;
+    fill: rgba(180, 180, 180, 1);
+  }
+
+  header .title {
+    flex: 5 6 600px;
+    text-align: center;
+  }
+
+  .title p {
+    margin: 7px 0;
   }
 
   main {
     top: 100px;
     left: 0;
     bottom: 200px;
+    overflow: hidden;
   }
 
   footer {
@@ -89,51 +99,134 @@
 
   .read-header {
     position: absolute;
-    width: 200px;
+    width: 250px;
     left: 56.5%;
-    top: 0;
-    transform: translate3d(-50%, 0, 0) rotateZ(-45deg);
+    top: -65px;
+    transform: translate3d(-50%, 0, 0) rotateZ(-20deg);
     transform-origin: 25% 16%;
-    transition: all .3s;
+    transition: all .3s ease-in;
     z-index: 3;
   }
 
   .playing {
-    transform: translate3d(-50%, 0, 0) rotateZ(0deg);
+    transform: translate3d(-50%, 0, 0) rotateZ(-0deg);
   }
 </style>
 
 <template>
   <div class="wrapper">
-    <div class="bg"></div>
-    <header></header>
-    <main @touchstart="play()">
+    <div class="bg" :style="{ backgroundImage: 'url(' + currentItem.image.src + ')' }"></div>
+    <header>
+      <span @touchstart="return">
+        <svg class="icon">
+          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-return"></use>
+        </svg>
+      </span>
+      <div class="title">
+        <p>What Are Words</p>
+        <p>charlie Puth</p>
+      </div>
+      <span>
+        <svg class="icon">
+          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-share"></use>
+        </svg>
+      </span>
+    </header>
+    <main>
       <img class="read-header" :class="{ 'playing':playing }" src="/dist/media/image/cm2_play_needle_play@3x.png">
       <div class="player-bg">
-        <img class="img" :class="{ 'paused-rotate':!playing }" src="http://p1.music.126.net/19uFBdmSXalWhG8CQcZ9Nw==/2282586139308128.jpg">
+        <canvas width="1200" height="1200"></canvas>
         <span class="player"></span>
       </div>
     </main>
-    <footer @touchstart="return"></footer>
+    <footer>
+      <b-music-control v-if="currentItem.url !== ''" :url="currentItem.url" :playing.sync="playing"></b-music-control>
+    </footer>
   </div>
 </template>
 
 <script type="text/babel">
+  import Vue from 'vue';
+
   export default {
     data(){
       return {
-        playing: false
-      };
+        playing: false,
+        stageObj: {
+          stage: null,
+          r: 0
+        },
+        index: 0,
+        currentItem: {
+          url: '',
+          image: {}
+        }
+      }
+    },
+
+    props: ['list'],
+
+    watch: {
+      playing(value){
+        if (value) this.play();
+      }
     },
 
     methods: {
       play(){
-        this.playing = !this.playing;
+        setTimeout(() => {
+          requestAnimationFrame(this.draw);
+        }, 300);
       },
 
       return(){
         this.$dispatch('displayPlayer');
+      },
+
+      draw(){
+        let {stage, r} = this.stage;
+        let image = this.currentItem.image;
+        stage.clearRect(-r / 2, -r / 2, r, r);
+        stage.rotate(Math.PI / 180);
+        stage.drawImage(image, -r / 2, -r / 2, r, r);
+        if (this.playing) requestAnimationFrame(this.draw);
+      },
+
+      init(index){
+        let image = new Image();
+        image.onload = () => {
+          this.currentItem.image = image;
+          this.stage.stage.drawImage(image, -this.stage.r / 2, -this.stage.r / 2, this.stage.r, this.stage.r);
+        };
+        image.src = this.list[index].src;
+        this.currentItem.url = this.list[index].url;
       }
+    },
+
+    events: {
+      toggle(flag){
+        let i = this.index;
+        if (flag === -1) {
+          i = i - 1;
+        } else {
+          i = i + 1;
+        }
+        if (this.list[i]) {
+          this.index = i;
+          this.init(i);
+        }
+      }
+    },
+
+    ready(){
+      var canvas = this.$el.querySelector("canvas");
+      var ctx = canvas.getContext("2d");
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      this.stage = {
+        stage: ctx,
+        r: canvas.width
+      };
+      this.init(0);
     }
   }
 </script>
