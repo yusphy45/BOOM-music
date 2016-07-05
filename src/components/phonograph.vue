@@ -1,7 +1,7 @@
 <style scoped>
   .wrapper {
     position: fixed;
-    background-color: #fff;
+    background-color: #333;
     height: 100%;
     width: 100%;
     left: 0;
@@ -16,40 +16,13 @@
   .bg {
     width: 100%;
     height: 100%;
-    background-position: 50% 50%;
+    background-position: 50% 40%;
     background-repeat: no-repeat;
-    background-size: auto 400%;
-    -webkit-filter: blur(50px);
+    background-size: auto 100%;
+    -webkit-filter: blur(120px);
   }
 
-  .player {
-    background-image: url('/dist/media/image/cm2_play_disc@3x.png');
-    background-size: 100% 100%;
-    width: 650px;
-    height: 650px;
-  }
-
-  .player-bg {
-    border-radius: 50%;
-    background-color: rgba(155, 155, 155, .2);
-    width: 660px;
-    height: 660px;
-  }
-
-  canvas {
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-  }
-
-  .player-bg, .player, canvas {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate3d(-50%, -50%, 0);
-  }
-
-  header, main, footer {
+  header, footer {
     position: absolute;
     width: 100%;
   }
@@ -62,7 +35,7 @@
     border-bottom: 2px solid #eee;
     align-items: center;
     justify-content: space-between;
-    color: rgba(180, 180, 180, 1);
+    color: #fff;
   }
 
   header span {
@@ -73,7 +46,7 @@
   header .icon {
     width: 50px;
     height: 50px;
-    fill: rgba(180, 180, 180, 1);
+    fill: #fff;
   }
 
   header .title {
@@ -97,25 +70,30 @@
     bottom: 0;
   }
 
-  .read-header {
-    position: absolute;
-    width: 250px;
-    left: 56.5%;
-    top: -65px;
-    transform: translate3d(-50%, 0, 0) rotateZ(-20deg);
-    transform-origin: 25% 16%;
-    transition: all .3s ease-in;
-    z-index: 3;
+  .control {
+    height: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
-  .playing {
-    transform: translate3d(-50%, 0, 0) rotateZ(-0deg);
+  .control span {
+    display: inline-block;
+    flex: 1 1 200px;
+    text-align: center;
   }
+
+  .control-icon {
+    width: 60px;
+    height: 60px;
+    fill: #fff;
+  }
+
 </style>
 
 <template>
   <div class="wrapper">
-    <div class="bg" :style="{ backgroundImage: 'url(' + currentItem.image.src + ')' }"></div>
+    <div class="bg" :style="{ backgroundImage: 'url(' + currentItem.src + ')' }"></div>
     <header>
       <span @touchstart="return">
         <svg class="icon">
@@ -123,8 +101,8 @@
         </svg>
       </span>
       <div class="title">
-        <p>What Are Words</p>
-        <p>charlie Puth</p>
+        <p v-text="currentItem.name"></p>
+        <p v-text="currentItem.singer"></p>
       </div>
       <span>
         <svg class="icon">
@@ -132,101 +110,120 @@
         </svg>
       </span>
     </header>
-    <main>
-      <img class="read-header" :class="{ 'playing':playing }" src="/dist/media/image/cm2_play_needle_play@3x.png">
-      <div class="player-bg">
-        <canvas width="1200" height="1200"></canvas>
-        <span class="player"></span>
-      </div>
-    </main>
+    <b-album :src="currentItem.src"></b-album>
     <footer>
-      <b-music-control v-if="currentItem.url !== ''" :url="currentItem.url" :playing.sync="playing"></b-music-control>
+      <b-music-process v-if="currentItem.url !== ''" :url="currentItem.url"></b-music-process>
+      <div class="control">
+      <span>
+      </span>
+      <span @touchstart="preSong">
+        <svg class="control-icon">
+          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-pre"></use>
+        </svg>
+      </span>
+      <span @touchstart="play(1)" v-show="playing !== 1">
+        <svg class="control-icon">
+          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-play"></use>
+        </svg>
+      </span>
+      <span @touchstart="play(0)" v-show="playing === 1">
+        <svg class="control-icon">
+          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-paused"></use>
+        </svg>
+      </span>
+      <span @touchstart="nextSong">
+        <svg class="control-icon">
+          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-next"></use>
+        </svg>
+      </span>
+      <span>
+      </span>
+      </div>
     </footer>
   </div>
 </template>
 
 <script type="text/babel">
   import Vue from 'vue';
+  import { getStatus, getIndex }from 'vuex/getters.js';
+  import { displayPlayer, choose, next, pre, toggle } from 'vuex/actions.js';
 
   export default {
     data(){
       return {
-        playing: false,
         stageObj: {
           stage: null,
           r: 0
         },
-        index: 0,
         currentItem: {
           url: '',
-          image: {}
+          src: '',
+          name: '',
+          singer: ''
         }
       }
     },
 
     props: ['list'],
 
-    watch: {
-      playing(value){
-        if (value) this.play();
+    vuex: {
+      getters: {
+        index: getIndex,
+        playing: getStatus
+      },
+      actions: {
+        displayPlayer,
+        toggle,
+        choose,
+        next,
+        pre
       }
     },
 
     methods: {
-      play(){
-        setTimeout(() => {
-          requestAnimationFrame(this.draw);
-        }, 300);
-      },
-
       return(){
-        this.$dispatch('displayPlayer');
+        this.displayPlayer(false);
       },
 
-      draw(){
-        let {stage, r} = this.stage;
-        let image = this.currentItem.image;
-        stage.clearRect(-r / 2, -r / 2, r, r);
-        stage.rotate(Math.PI / 180);
-        stage.drawImage(image, -r / 2, -r / 2, r, r);
-        if (this.playing) requestAnimationFrame(this.draw);
+      init(){
+        this.currentItem = this.list[this.index];
       },
 
-      init(index){
-        let image = new Image();
-        image.onload = () => {
-          this.currentItem.image = image;
-          this.stage.stage.drawImage(image, -this.stage.r / 2, -this.stage.r / 2, this.stage.r, this.stage.r);
-        };
-        image.src = this.list[index].src;
-        this.currentItem.url = this.list[index].url;
+      play(flag){
+        this.toggle(flag);
+      },
+
+      nextSong(){
+        if (this.index < this.list.length - 1) {
+          this.next();
+        } else {
+          this.choose(0);
+        }
+      },
+
+      preSong(){
+        if (this.index > 0) {
+          this.pre();
+        } else {
+          this.choose(this.list.length - 1);
+        }
       }
     },
 
-    events: {
-      toggle(flag){
-        let i = this.index;
-        if (flag === -1) {
-          i = i - 1;
-        } else {
-          i = i + 1;
-        }
-        if (this.list[i]) {
-          this.index = i;
-          this.init(i);
+    watch: {
+      index(newVal, oldVal) {
+        if (newVal !== oldVal) this.currentItem = this.list[this.index];
+      },
+      playing(newVal){
+        if (newVal === -1) {
+          console.log(this.playing);
+          this.nextSong();
         }
       }
     },
 
     ready(){
-      var canvas = this.$el.querySelector("canvas");
-      var ctx = canvas.getContext("2d");
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      this.stage = {
-        stage: ctx,
-        r: canvas.width
-      };
-      this.init(0);
+      this.init();
     }
   }
 </script>

@@ -1,26 +1,7 @@
 <style scoped>
-  .control, {
-    height: 80px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .control span {
-    display: inline-block;
-    flex: 1 1 200px;
-    text-align: center;
-  }
-
-  .control-icon {
-    width: 60px;
-    height: 60px;
-    fill: rgba(180, 180, 180, 1);
-  }
-
   .process {
     height: 60px;
-    color: rgba(180, 180, 180, 1);
+    color: #fff;
     text-align: center;
   }
 
@@ -49,36 +30,13 @@
       <canvas width="1000" height="120"></canvas>
       <span v-text="duration | time"></span>
     </div>
-    <div class="control">
-      <span>
-      </span>
-      <span @touchstart="pre">
-        <svg class="control-icon">
-          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-pre"></use>
-        </svg>
-      </span>
-      <span @touchstart="play(true)" v-show="!playing">
-        <svg class="control-icon">
-          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-play"></use>
-        </svg>
-      </span>
-      <span @touchstart="play(false)" v-show="playing">
-        <svg class="control-icon">
-          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-paused"></use>
-        </svg>
-      </span>
-      <span @touchstart="next">
-        <svg class="control-icon">
-          <use xlink:href="/dist/media/image/symbol-defs.svg#icon-next"></use>
-        </svg>
-      </span>
-      <span>
-      </span>
-    </div>
   </div>
 </template>
 
 <script type="text/babel">
+  import { getStatus }from 'vuex/getters.js';
+  import { loaded, toggle } from 'vuex/actions.js';
+
   var Mc = function (canvas) {
     this.stage = canvas.getContext('2d');
     this.w = canvas.width;
@@ -125,11 +83,22 @@
         duration: 0,
         stage: null,
         songLength: 0,
-        bufferLength: 0
+        bufferLength: 0,
+        timer: 0
       }
     },
 
-    props: ['url', 'playing'],
+    props: ['url'],
+
+    vuex: {
+      getters: {
+        playing: getStatus
+      },
+      actions: {
+        loaded,
+        toggle
+      }
+    },
 
     filters: {
       'time'(val){
@@ -142,10 +111,13 @@
     },
 
     methods: {
-      play(flag){
-        this.playing = flag;
-        this.playing ? this.currentItem.play() : this.currentItem.pause();
-        if (this.playing) requestAnimationFrame(this.draw);
+      play(){
+        if (this.playing === 1 && this.currentItem.paused) {
+          this.currentItem.play();
+          this.timer = requestAnimationFrame(this.draw);
+        } else {
+          this.currentItem.pause();
+        }
       },
 
       draw(){
@@ -153,7 +125,7 @@
         this.songLength = (this.currentItem.currentTime / this.currentItem.duration) * this.stage.w;
         this.bufferLength = this.bufferLength = ((this.currentItem.buffered.length > 0 ? this.currentItem.buffered.end(0) : 0) / this.currentItem.duration) * this.stage.w;
         this.stage.draw('#333', 10, this.bufferLength, this.songLength);
-        if (this.playing) requestAnimationFrame(this.draw);
+        if (this.playing === 1) this.timer = requestAnimationFrame(this.draw);
       },
 
       init(){
@@ -162,26 +134,36 @@
         this.currentItem = audio;
         audio.addEventListener('canplay', () => {
           this.duration = audio.duration;
+          this.loaded(false);
+          if (this.playing === 1) this.play(true);
         }, false);
-
+        this.duration = 0;
         this.stage = new Mc(this.$el.querySelector('canvas'));
         this.stage.draw('#333', 10, 0);
-        if (this.playing) this.play(true);
         this.currentTime = 0;
-      },
-
-      next(){
-        this.$dispatch('toggle', 1);
-      },
-
-      pre(){
-        this.$dispatch('toggle', -1);
+        this.loaded(true);
       }
     },
 
     watch: {
-      url(){
-        this.init();
+      url(newVal, oldVal){
+        if (newVal !== oldVal) {
+          if (this.timer) cancelAnimationFrame(this.timer);
+          this.init();
+        }
+      },
+
+      playing(newVal, oldVal){
+        if (newVal !== oldVal) this.play();
+      },
+
+      currentTime(value){
+        if (value !== 0 && value >= this.duration - 1) {
+          this.toggle(-1);
+          setTimeout(()=> {
+            this.toggle(1);
+          })
+        }
       }
     },
 

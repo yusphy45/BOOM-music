@@ -14,7 +14,7 @@
 </style>
 
 <template>
-  <span @touchstart="displayPlayer">
+  <span @touchstart="displayPlayer(true)">
     <svg class="icon">
       <use xlink:href="/dist/media/image/symbol-defs.svg#icon-sound-wave"></use>
     </svg>
@@ -22,14 +22,16 @@
 </template>
 
 <script type="text/babel">
+  import { displayPlayer } from 'vuex/actions.js';
+
   export default {
     data(){
       return {};
     },
 
-    methods: {
-      displayPlayer(){
-        this.$dispatch('displayPlayer');
+    vuex: {
+      actions: {
+        displayPlayer
       }
     }
   }

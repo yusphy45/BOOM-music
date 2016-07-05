@@ -101,10 +101,10 @@ module.exports = {
     return [px2rem({remUnit: 75}), autoprefixer];
   },
 
-  babel: {
-    presets: ['es2015'],
-    plugins: ['transform-runtime']
-  },
+  //babel: {
+  //  presets: ['es2015'],
+  //  plugins: ['transform-runtime', 'syntax-async-functions']
+  //},
 
   vue: {
     loaders: {

@@ -1,12 +1,14 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import store from './vuex/store.js';
 
 Vue.use(VueRouter);
 
 var App = Vue.extend({
   components: {
     app: require('./app.vue')
-  }
+  },
+  store
 });
 
 var router = new VueRouter();
@@ -29,13 +31,13 @@ router.map({
       }
     }
   },
-  '/my-music:': {
+  '/my-music': {
     component: require('./main/my-music.vue')
   },
-  '/sns:': {
+  '/sns': {
     component: require('./main/sns.vue')
   },
-  '/account:': {
+  '/account': {
     component: require('./main/account.vue')
   }
 });

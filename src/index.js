@@ -15,7 +15,8 @@ require('./basic/util.js');
 Vue.use(VueResource);
 init();
 
-serviceWorker();
+//serviceWorker();
+
 
 
 
